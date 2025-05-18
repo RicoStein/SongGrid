@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import { useSpotify } from '../context/SpotifyContext';
 
 type SpotifyUser = {
   display_name: string;
@@ -14,7 +15,8 @@ type SpotifyUser = {
   images: { url: string }[];
 };
 
-export default function ProfileScreen({ accessToken }: { accessToken: string }) {
+export default function ProfileScreen() {
+  const { accessToken } = useSpotify();
   const [displayName, setDisplayName] = useState('');
   const [userId, setUserId] = useState('');
   const [profilePic, setProfilePic] = useState<any>(null);
@@ -22,15 +24,23 @@ export default function ProfileScreen({ accessToken }: { accessToken: string }) 
 
   useEffect(() => {
     async function fetchUser() {
+      if (!accessToken) return;
+
       try {
         const res = await fetch('https://api.spotify.com/v1/me', {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
         });
+
+        if (!res.ok) {
+          throw new Error(`Spotify API returned ${res.status}`);
+        }
+
         const data: SpotifyUser = await res.json();
         setDisplayName(data.display_name ?? 'Spotify Nutzer');
         setUserId('#' + (data.id ?? 'unbekannt'));
+
         if (data.images && data.images.length > 0) {
           setProfilePic({ uri: data.images[0].url });
         } else {
@@ -45,6 +55,7 @@ export default function ProfileScreen({ accessToken }: { accessToken: string }) 
         setLoading(false);
       }
     }
+
     fetchUser();
   }, [accessToken]);
 
@@ -61,7 +72,11 @@ export default function ProfileScreen({ accessToken }: { accessToken: string }) 
       <Image source={profilePic} style={styles.avatar} />
       <Text style={styles.id}>UserID: {userId}</Text>
       <Text style={styles.label}>Anzeigename:</Text>
-      <TextInput style={styles.input} value={displayName} onChangeText={setDisplayName} />
+      <TextInput
+        style={styles.input}
+        value={displayName}
+        onChangeText={setDisplayName}
+      />
     </View>
   );
 }

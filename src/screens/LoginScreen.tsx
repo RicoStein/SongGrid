@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, Linking } from 'react-native';
 import * as AuthSession from 'expo-auth-session';
 import styles from './LoginScreenStyles';
+import { useSpotify } from '../context/SpotifyContext';
 
 const CLIENT_ID = '5302b82cbc5c41e8ab83e4ea80f6e56d';
 
@@ -15,7 +16,9 @@ const REDIRECT_URI = AuthSession.makeRedirectUri({
   useProxy: true,
 } as any);
 
-export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (token: string) => void }) {
+export default function LoginScreen() {
+  const { setAccessToken } = useSpotify();
+
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
       clientId: CLIENT_ID,
@@ -62,7 +65,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (token
 
           if (tokenResult.access_token) {
             console.log('✅ Zugriffstoken erfolgreich empfangen.');
-            onLoginSuccess(tokenResult.access_token);
+            setAccessToken(tokenResult.access_token); // ← Context-Aufruf
           } else {
             console.error('❌ Token-Tausch fehlgeschlagen:', tokenResult);
           }

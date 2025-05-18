@@ -1,228 +1,81 @@
 import React from 'react';
-import { View, Text, StyleSheet, Button, Alert } from 'react-native';
+import {
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+  StyleSheet,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/types';
+import { SafeAreaView } from 'react-native-safe-area-context'; // 👈 NEU
 
-type Props = {
-  accessToken: string;
-};
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export default function HomeScreen({ accessToken }: Props) {
-  const handlePlayPopSong = async () => {
-    console.log('🎯 Button gedrückt – Zugriffstoken vorhanden:', !!accessToken);
+const GAME_MODES = [
+  {
+    id: 'ClassicSettings',
+    title: 'Classic Mode',
+    image: require('../../assets/classic.png'),
+    description: 'Rate Songs aus Jahrzehnten.',
+  },
+  {
+    id: 'PartySettings',
+    title: 'Party Mode',
+    image: require('../../assets/party.png'),
+    description: 'Spiele gemeinsam mit Freunden.',
+  },
+  {
+    id: 'ChallengeSettings',
+    title: 'Challenge Mode',
+    image: require('../../assets/challenge.png'),
+    description: 'Zeitdruck trifft Musikkenntnis.',
+  },
+];
 
-    try {
-      console.log('📚 Verfügbare Genres abrufen...');
-      await fetchAvailableGenres(accessToken);
+export default function HomeScreen() {
+  const navigation = useNavigation<NavigationProp>();
+  const screenWidth = Dimensions.get('window').width;
+  const numColumns = screenWidth > 600 ? 2 : 1;
 
-      console.log('📱 Geräte abrufen...');
-      const targetDeviceId = await getMobileDeviceId(accessToken);
-
-      if (!targetDeviceId) {
-        Alert.alert('Kein Handy erkannt', 'Öffne die Spotify-App auf deinem Smartphone.');
-        return;
-      }
-
-      console.log('✅ Zielgerät erkannt. Umschalten auf Gerät ID:', targetDeviceId);
-      await transferPlaybackToDevice(accessToken, targetDeviceId);
-
-      console.log('📡 Pop-Song abrufen...');
-      const uri = await getRandomPopSong(accessToken);
-
-      if (!uri) {
-        console.warn('⚠️ Kein Song-URI erhalten.');
-        Alert.alert('Fehler', 'Kein Song gefunden.');
-        return;
-      }
-
-      console.log('▶️ Versuche Song auf Handy abzuspielen...');
-      await playSong(uri, accessToken);
-
-      await getCurrentPlayback(accessToken);
-
-      Alert.alert('🎵 Song sollte jetzt auf dem Handy laufen!');
-    } catch (err) {
-      console.error('❌ Fehler im Button-Handler:', err);
-      Alert.alert('Fehler', 'Song konnte nicht abgespielt werden.');
-    }
-  };
+  const renderItem = ({ item }: { item: typeof GAME_MODES[0] }) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate(item.id as keyof RootStackParamList)}
+    >
+      <Text style={styles.title}>{item.title}</Text>
+      <Image source={item.image} style={styles.image} />
+      <Text style={styles.description}>{item.description}</Text>
+    </TouchableOpacity>
+  );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>🎧 Zufälligen Pop-Song abspielen</Text>
-      <Button title="Jetzt abspielen" onPress={handlePlayPopSong} />
-    </View>
+    <SafeAreaView style={styles.container}>
+      <FlatList
+        data={GAME_MODES}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        numColumns={numColumns}
+        contentContainerStyle={styles.list}
+      />
+    </SafeAreaView>
   );
 }
 
-// 📚 Genres abrufen (optional)
-async function fetchAvailableGenres(accessToken: string) {
-  try {
-    const res = await fetch('https://api.spotify.com/v1/recommendations/available-genre-seeds', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    console.log('📡 Genre-Endpunkt Antwortstatus:', res.status);
-
-    if (!res.ok) {
-      const errText = await res.text();
-      console.warn('❗ Fehler beim Abrufen der Genres:', errText);
-      return;
-    }
-
-    const data = await res.json();
-    console.log('✅ Verfügbare Genres:', data.genres);
-  } catch (error) {
-    console.error('❌ Fehler beim Genre-Abruf:', error);
-  }
-}
-
-// 📱 Finde dein Handy als Zielgerät
-async function getMobileDeviceId(accessToken: string): Promise<string | null> {
-  try {
-    const res = await fetch('https://api.spotify.com/v1/me/player/devices', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    const data = await res.json();
-    const devices = data.devices;
-
-    console.log('📱 Alle Geräte:', devices);
-
-    const mobileDevice = devices.find((device: any) =>
-      device.type === 'Smartphone'
-    );
-
-    if (mobileDevice) {
-      console.log('📲 Zielgerät gefunden:', mobileDevice.name);
-      return mobileDevice.id;
-    }
-
-    console.warn('⚠️ Kein Mobilgerät gefunden.');
-    return null;
-  } catch (error) {
-    console.error('❌ Fehler beim Abrufen der Geräte:', error);
-    return null;
-  }
-}
-
-// 🔄 Umschalten des Wiedergabegeräts
-async function transferPlaybackToDevice(accessToken: string, deviceId: string) {
-  try {
-    const response = await fetch('https://api.spotify.com/v1/me/player', {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        device_ids: [deviceId],
-        play: false,
-      }),
-    });
-
-    console.log('🔁 Transfer response status:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('⚠️ Fehler beim Wechseln des Geräts:', errorText);
-    }
-  } catch (error) {
-    console.error('❌ Fehler in transferPlaybackToDevice():', error);
-  }
-}
-
-// 🎶 Pop-Song holen
-async function getRandomPopSong(accessToken: string): Promise<string | null> {
-  try {
-    const url = 'https://api.spotify.com/v1/recommendations?seed_genres=pop&seed_tracks=4uLU6hMCjMI75M1A2tKUQC&limit=1&market=DE';
-    console.log('🌐 Fetching:', url);
-
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    console.log('🔍 Antwortstatus von getRandomPopSong:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.warn('⚠️ API Error:', errorText);
-      return getFallbackTrack();
-    }
-
-    const data = await response.json();
-    if (data.tracks && data.tracks.length > 0) {
-      const trackUri = data.tracks[0].uri;
-      console.log('🎶 Song URI:', trackUri);
-      return trackUri;
-    }
-
-    console.warn('⚠️ Keine Songs gefunden.');
-    return getFallbackTrack();
-  } catch (error) {
-    console.error('❌ Fehler in getRandomPopSong:', error);
-    return getFallbackTrack();
-  }
-}
-
-// 🧻 Fallback-Song
-function getFallbackTrack(): string {
-  const fallbackUri = 'spotify:track:4uLU6hMCjMI75M1A2tKUQC'; // Rick Astley
-  console.warn('🔁 Fallback verwendet:', fallbackUri);
-  return fallbackUri;
-}
-
-// ▶️ Song starten
-async function playSong(uri: string, accessToken: string) {
-  try {
-    const response = await fetch('https://api.spotify.com/v1/me/player/play', {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ uris: [uri] }),
-    });
-
-    console.log('🔄 playSong Status:', response.status);
-
-    if (response.status !== 204) {
-      const errorText = await response.text();
-      console.error('⚠️ Fehler beim Abspielen:', errorText);
-    } else {
-      console.log('✅ Song gestartet!');
-    }
-  } catch (error) {
-    console.error('❌ Fehler in playSong():', error);
-  }
-}
-
-// 🔍 Playback anzeigen
-async function getCurrentPlayback(accessToken: string) {
-  try {
-    const res = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    if (res.status === 204) {
-      console.log('⏹️ Kein Song läuft.');
-      return;
-    }
-
-    const data = await res.json();
-    const track = data?.item;
-    if (track) {
-      const artists = track.artists.map((a: any) => a.name).join(', ');
-      console.log(`🎧 Läuft: ${track.name} – ${artists}`);
-    } else {
-      console.log('🕵️ Kein Track-Objekt.');
-    }
-  } catch (error) {
-    console.error('❌ Fehler beim Playback-Abruf:', error);
-  }
-}
-
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  heading: { fontSize: 18, marginBottom: 20, color: '#0B3D91', fontWeight: 'bold' },
+  container: { flex: 1, backgroundColor: '#fff' },
+  list: { padding: 16 },
+  card: {
+    flex: 1,
+    backgroundColor: '#f0f2f5',
+    margin: 8,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  title: { fontSize: 18, fontWeight: 'bold', marginBottom: 8, color: '#0B3D91' },
+  image: { width: '100%', height: 120, borderRadius: 8, marginBottom: 10 },
+  description: { fontSize: 14, color: '#444', textAlign: 'center' },
 });
