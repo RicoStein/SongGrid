@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
 import HomeScreen from './src/screens/HomeScreen';
-import PlaceholderScreen from './src/screens/PlaceholderScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import LoginScreen from './src/screens/LoginScreen';
 
@@ -27,8 +27,8 @@ export default function App() {
 
             if (route.name === 'Home') {
               iconName = 'home';
-            } else if (route.name === 'Mehr') {
-              iconName = 'grid';
+            } else if (route.name === 'Einstellungen') {
+              iconName = 'settings';
             } else if (route.name === 'Profil') {
               iconName = 'person';
             }
@@ -43,9 +43,9 @@ export default function App() {
         <Tab.Screen name="Home">
           {() => <HomeScreen accessToken={accessToken} />}
         </Tab.Screen>
-        <Tab.Screen name="Mehr" component={PlaceholderScreen} />
+        <Tab.Screen name="Einstellungen" component={SettingsScreen} />
         <Tab.Screen name="Profil">
-          {() => <SettingsScreen accessToken={accessToken} />}
+          {() => <ProfileScreen accessToken={accessToken} />}
         </Tab.Screen>
       </Tab.Navigator>
     </NavigationContainer>

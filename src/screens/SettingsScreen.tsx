@@ -1,4 +1,21 @@
 import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+
+export default function SettingsScreen() {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.text}>Hier kommen bald Einstellungen.</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  text: { fontSize: 18, color: '#555' },
+});
+
+/*
+import React from 'react';
 import { View, Text, StyleSheet, Button, Alert } from 'react-native';
 
 type Props = {
@@ -229,3 +246,4 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   heading: { fontSize: 18, marginBottom: 20 },
 });
+*/
