@@ -15,69 +15,67 @@ const GENRE_OPTIONS = [
   {
     id: 'pop',
     label: 'Pop',
-    colorImage: require('../../assets/filters/pop.jpg'),
-    bwImage: require('../../assets/filters/bw/pop.jpg'),
+    colorImage: require('../../assets/filters/pop.png'),
+    bwImage: require('../../assets/filters/bw/pop.png'),
   },
   {
     id: 'rock',
     label: 'Rock',
-    colorImage: require('../../assets/filters/rock.jpg'),
-    bwImage: require('../../assets/filters/bw/rock.jpg'),
+    colorImage: require('../../assets/filters/rock.png'),
+    bwImage: require('../../assets/filters/bw/rock.png'),
   },
   {
     id: 'hip-hop',
     label: 'Hip Hop',
-    colorImage: require('../../assets/filters/rock.jpg'),
-    bwImage: require('../../assets/filters/bw/rock.jpg'),
+    colorImage: require('../../assets/filters/hip-hop.png'),
+    bwImage: require('../../assets/filters/bw/hip-hop.png'),
   },
   {
     id: 'jazz',
     label: 'Jazz',
-    colorImage: require('../../assets/filters/pop.jpg'),
-    bwImage: require('../../assets/filters/bw/pop.jpg'),
+    colorImage: require('../../assets/filters/jazz.png'),
+    bwImage: require('../../assets/filters/bw/jazz.png'),
   },
   {
     id: 'electronic',
     label: 'Electronic',
-    colorImage: require('../../assets/filters/rock.jpg'),
-    bwImage: require('../../assets/filters/bw/rock.jpg'),
+    colorImage: require('../../assets/filters/electronic.png'),
+    bwImage: require('../../assets/filters/bw/electronic.png'),
   },
 ];
-
 
 const DECADE_OPTIONS = [
   {
     id: '80s',
     label: '80er',
-    colorImage: require('../../assets/filters/80s.jpg'),
-    bwImage: require('../../assets/filters/bw/80s.jpg'),
+    colorImage: require('../../assets/filters/80s.png'),
+    bwImage: require('../../assets/filters/bw/80s.png'),
   },
   {
     id: '90s',
     label: '90er',
-    colorImage: require('../../assets/filters/90s.jpg'),
-    bwImage: require('../../assets/filters/bw/90s.jpg'),
+    colorImage: require('../../assets/filters/90s.png'),
+    bwImage: require('../../assets/filters/bw/90s.png'),
   },
   {
     id: '2000s',
     label: '2000er',
-    colorImage: require('../../assets/filters/80s.jpg'),
-    bwImage: require('../../assets/filters/bw/80s.jpg'),
+    colorImage: require('../../assets/filters/2000s.png'),
+    bwImage: require('../../assets/filters/bw/2000s.png'),
   },
   {
     id: '2010s',
     label: '2010er',
-    colorImage: require('../../assets/filters/90s.jpg'),
-    bwImage: require('../../assets/filters/bw/90s.jpg'),
+    colorImage: require('../../assets/filters/2010s.png'),
+    bwImage: require('../../assets/filters/bw/2010s.png'),
   },
   {
     id: '2020s',
     label: '2020er',
-    colorImage: require('../../assets/filters/80s.jpg'),
-    bwImage: require('../../assets/filters/bw/80s.jpg'),
+    colorImage: require('../../assets/filters/2020s.png'),
+    bwImage: require('../../assets/filters/bw/2020s.png'),
   },
 ];
-
 
 export default function ClassicSettingsScreen() {
   const { accessToken } = useSpotify();
@@ -117,7 +115,6 @@ export default function ClassicSettingsScreen() {
 
     const query = encodeURIComponent(`genre:"${genre}" year:${year}`);
     const url = `https://api.spotify.com/v1/search?q=${query}&type=track&market=DE&limit=1&offset=${offset}`;
-    console.log('🎯 Suche-URL:', url);
 
     try {
       const res = await fetch(url, {
@@ -160,15 +157,29 @@ export default function ClassicSettingsScreen() {
   };
 
   const playSong = async (uri: string, token: string) => {
-    await fetch('https://api.spotify.com/v1/me/player/play', {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ uris: [uri] }),
-    });
-  };
+  const url = 'https://api.spotify.com/v1/me/player/play';
+
+  console.log('🎵 URI:', uri);
+  console.log('🔐 Token (gekürzt):', token?.slice(0, 25) + '...');
+
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ uris: [uri] }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error('❌ Fehler beim Abspielen:', response.status, error);
+    throw new Error(`Spotify-API-Fehler: ${response.status}`);
+  }
+
+  console.log('✅ Song erfolgreich gestartet!');
+};
+
 
   const pickRandom = (arr: string[]) =>
     arr[Math.floor(Math.random() * arr.length)];
@@ -188,76 +199,65 @@ export default function ClassicSettingsScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.header}>Classic Mode</Text>
 
-      {/* Genre Filter */}
-      <View
-        style={[
-          styles.dropdownWrapper,
-          !genresExpanded && styles.dropdownWrapperBottomRounded,
-        ]}
-      >
-        <TouchableOpacity
-          style={[
-            styles.dropdownHeader,
-            genresExpanded && styles.dropdownHeaderWithDivider,
-          ]}
-          onPress={() => setGenresExpanded(!genresExpanded)}
-        >
-          <Text style={styles.dropdownText}>Genre</Text>
-          <Text style={styles.dropdownArrow}>{genresExpanded ? '▲' : '▼'}</Text>
-        </TouchableOpacity>
+      {/* 📦 GENRE FILTER */}
+<View style={styles.shadowWrapper}>
+  <View style={styles.dropdownContainer}>
+    <TouchableOpacity
+      style={styles.dropdownHeader}
+      onPress={() => setGenresExpanded(!genresExpanded)}
+    >
+      <Text style={styles.dropdownText}>Genre</Text>
+      <Text style={styles.dropdownArrow}>{genresExpanded ? '▲' : '▼'}</Text>
+    </TouchableOpacity>
 
-        {genresExpanded && (
-          <View style={styles.dropdownContent}>
-            <FilterGrid
-              options={GENRE_OPTIONS}
-              selected={selectedGenres}
-              onToggle={(id) =>
-                toggleSelection(id, selectedGenres, setSelectedGenres)
-              }
-            />
-          </View>
-        )}
+    {genresExpanded && (
+      <View style={styles.dropdownBody}>
+        <View style={styles.dividerLine} />
+        <FilterGrid
+          options={GENRE_OPTIONS}
+          selected={selectedGenres}
+          onToggle={(id) =>
+            toggleSelection(id, selectedGenres, setSelectedGenres)
+          }
+        />
       </View>
+    )}
+  </View>
+</View>
 
 
-      {/* Decade Filter */}
-      <View
-        style={[
-          styles.dropdownWrapper,
-          !decadesExpanded && styles.dropdownWrapperBottomRounded,
-        ]}
-      >
-        <TouchableOpacity
-          style={[
-            styles.dropdownHeader,
-            decadesExpanded && styles.dropdownHeaderWithDivider,
-          ]}
-          onPress={() => setDecadesExpanded(!decadesExpanded)}
-        >
-          <Text style={styles.dropdownText}>Jahrzehnt</Text>
-          <Text style={styles.dropdownArrow}>{decadesExpanded ? '▲' : '▼'}</Text>
-        </TouchableOpacity>
+{/* 📦 DECADE FILTER */}
+<View style={styles.shadowWrapper}>
+  <View style={styles.dropdownContainer}>
+    <TouchableOpacity
+      style={styles.dropdownHeader}
+      onPress={() => setDecadesExpanded(!decadesExpanded)}
+    >
+      <Text style={styles.dropdownText}>Jahrzehnt</Text>
+      <Text style={styles.dropdownArrow}>{decadesExpanded ? '▲' : '▼'}</Text>
+    </TouchableOpacity>
 
-        {decadesExpanded && (
-          <View style={styles.dropdownContent}>
-            <FilterGrid
-              options={DECADE_OPTIONS}
-              selected={selectedDecades}
-              onToggle={(id) =>
-                toggleSelection(id, selectedDecades, setSelectedDecades)
-              }
-            />
-          </View>
-        )}
+    {decadesExpanded && (
+      <View style={styles.dropdownBody}>
+        <View style={styles.dividerLine} />
+        <FilterGrid
+          options={DECADE_OPTIONS}
+          selected={selectedDecades}
+          onToggle={(id) =>
+            toggleSelection(id, selectedDecades, setSelectedDecades)
+          }
+        />
       </View>
+    )}
+  </View>
+</View>
 
 
-      {/* Play Button */}
+
       <TouchableOpacity style={styles.playButton} onPress={handlePlaySong}>
         <Text style={styles.playButtonText}>🎧 Song abspielen</Text>
       </TouchableOpacity>
 
-      {/* Track Popup */}
       {trackInfo && (
         <TrackPopup
           visible={popupVisible}
