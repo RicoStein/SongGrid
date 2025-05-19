@@ -3,8 +3,8 @@ import {
   Text,
   TouchableWithoutFeedback,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
-import { useSafeAreaFrame } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedGestureHandler,
   useAnimatedStyle,
@@ -13,9 +13,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 
-export default function YellowGamePopup({ offsetY, isPlaying, onTogglePlayPause, onHidden }) {
-  const { height: SCREEN_HEIGHT } = useSafeAreaFrame(); // ✅ sichere Bildschirmhöhe
+const { height: SCREEN_HEIGHT } = Dimensions.get('screen'); // ✅ volle Höhe
 
+export default function YellowGamePopup({ offsetY, isPlaying, onTogglePlayPause, onHidden }) {
   const gestureHandler = useAnimatedGestureHandler({
     onActive: (event) => {
       offsetY.value = event.translationY;
@@ -36,10 +36,10 @@ export default function YellowGamePopup({ offsetY, isPlaying, onTogglePlayPause,
 
   return (
     <PanGestureHandler onGestureEvent={gestureHandler}>
-      <Animated.View style={[styles(SCREEN_HEIGHT).container, animatedStyle]}>
+      <Animated.View style={[styles.container, animatedStyle]}>
         <TouchableWithoutFeedback onPress={onTogglePlayPause}>
-          <Animated.View style={styles().inner}>
-            <Text style={styles().icon}>{isPlaying ? '⏸️' : '▶️'}</Text>
+          <Animated.View style={styles.inner}>
+            <Text style={styles.icon}>{isPlaying ? '⏸️' : '▶️'}</Text>
           </Animated.View>
         </TouchableWithoutFeedback>
       </Animated.View>
@@ -47,24 +47,19 @@ export default function YellowGamePopup({ offsetY, isPlaying, onTogglePlayPause,
   );
 }
 
-const styles = (height = 0) =>
-  StyleSheet.create({
-    container: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      height,
-      backgroundColor: '#eab676',
-      zIndex: 2,
-    },
-    inner: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    icon: {
-      fontSize: 64,
-      color: 'white',
-    },
-  });
+const styles = StyleSheet.create({
+  container: {
+  ...StyleSheet.absoluteFillObject, // ✅ deckt ALLES ab
+  backgroundColor: '#eab676',
+  zIndex: 22,
+},
+  inner: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  icon: {
+    fontSize: 64,
+    color: 'white',
+  },
+});

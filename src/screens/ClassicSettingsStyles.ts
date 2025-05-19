@@ -13,16 +13,16 @@ const styles = StyleSheet.create({
     color: '#0B3D91',
     marginBottom: 16,
   },
-shadowWrapper: {
-  backgroundColor: 'transparent',
-  shadowColor: '#000',
-  shadowOpacity: 0.06,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 2 },
-  elevation: 3,
-  borderRadius: 12,
-  marginBottom: 20,
-},
+  shadowWrapper: {
+    backgroundColor: 'transparent',
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
   dropdownHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -46,6 +46,11 @@ shadowWrapper: {
     padding: 10,
   },
 
+  roundSlider: {
+    width: '100%',
+    marginTop: 10,
+  },
+
   dividerLine: {
     height: 1,
     backgroundColor: '#ccc',
@@ -54,6 +59,19 @@ shadowWrapper: {
     marginBottom: 10,
     borderRadius: 1,
   },
+
+  fixedButtonWrapper: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 0,
+    backgroundColor: 'white', // optional: visuelle Trennung
+    paddingTop: 12,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+
+
 
   dropdownText: {
     fontSize: 16,
@@ -68,10 +86,10 @@ shadowWrapper: {
 
   playButton: {
     backgroundColor: '#0B3D91',
-    padding: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 30,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    marginBottom: 8, // falls nötig
   },
 
   playButtonText: {
@@ -80,32 +98,32 @@ shadowWrapper: {
     fontWeight: 'bold',
   },
   roundButtonContainer: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  marginTop: 10,
-  paddingHorizontal: 10,
-},
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingHorizontal: 10,
+  },
 
-roundButton: {
-  paddingVertical: 8,
-  paddingHorizontal: 16,
-  borderRadius: 20,
-  backgroundColor: '#ccc',
-  marginHorizontal: 5,
-},
+  roundButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#ccc',
+    marginHorizontal: 5,
+  },
 
-roundButtonSelected: {
-  backgroundColor: '#6c63ff',
-},
+  roundButtonSelected: {
+    backgroundColor: '#6c63ff',
+  },
 
-roundButtonText: {
-  color: '#333',
-  fontWeight: 'bold',
-},
+  roundButtonText: {
+    color: '#333',
+    fontWeight: 'bold',
+  },
 
-roundButtonTextSelected: {
-  color: '#fff',
-},
+  roundButtonTextSelected: {
+    color: '#fff',
+  },
 });
 
 

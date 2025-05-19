@@ -17,6 +17,8 @@ import PartySettingsScreen from './src/screens/PartySettingsScreen';
 import { SpotifyProvider, useSpotify } from './src/context/SpotifyContext';
 import { RootStackParamList, RootTabParamList } from './src/navigation/types';
 
+import GameOverlayScreen from './src/screens/GameOverlayScreen';
+
 const Tab = createBottomTabNavigator<RootTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -34,7 +36,7 @@ function MainTabs() {
         },
         tabBarActiveTintColor: '#0B3D91',
         tabBarInactiveTintColor: 'gray',
-        headerShown: false,
+        headerShown: false, // ✅ Kein Header für Tabs
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
@@ -54,15 +56,19 @@ function RootApp() {
   return (
     <NavigationContainer>
       <Stack.Navigator id={undefined}>
-
-        <Stack.Screen name="Tabs" component={MainTabs} options={{ headerShown: false }} />
+        <Stack.Screen
+          name="Tabs"
+          component={MainTabs}
+          options={{ headerShown: false }} // ✅ Tabs behalten keinen Header
+        />
         <Stack.Screen
           name="ClassicSettings"
           component={ClassicSettingsScreen}
-          options={{ headerShown: false }} // ✅ HEADER AUSSCHALTEN
+          options={{ title: 'Classic Mode' }} // ✅ Header wieder aktiv!
         />
         <Stack.Screen name="ChallengeSettings" component={ChallengeSettingsScreen} />
         <Stack.Screen name="PartySettings" component={PartySettingsScreen} />
+        <Stack.Screen name="GameOverlay" component={GameOverlayScreen} options={{ presentation: 'transparentModal', headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

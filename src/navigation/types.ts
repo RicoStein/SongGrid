@@ -9,4 +9,15 @@ export type RootStackParamList = {
   ClassicSettings: undefined;
   ChallengeSettings: undefined;
   PartySettings: undefined;
+  GameOverlay: {
+    track: {
+      uri: string;
+      title: string;
+      artist: string;
+      year: string;
+      genre: string;
+      image: string;
+    };
+  };
 };
+

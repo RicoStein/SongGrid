@@ -9,10 +9,12 @@ import {
 } from 'react-native';
 import { useSpotify } from '../context/SpotifyContext';
 import FilterGrid from '../components/FilterGrid';
-import InformationPopup from '../components/InformationPopup';
-import YellowGamePopup from '../components/YellowGamePopup';
 import styles from './ClassicSettingsStyles';
-import { useSharedValue } from 'react-native-reanimated';
+import { useNavigation } from '@react-navigation/native';
+import Slider from '@react-native-community/slider';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { RootStackParamList } from '../navigation/types';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 const GENRE_OPTIONS = [
   { id: 'pop', label: 'Pop', colorImage: require('../../assets/filters/pop.png'), bwImage: require('../../assets/filters/bw/pop.png') },
@@ -33,41 +35,38 @@ const DECADE_OPTIONS = [
   { id: '2020s', label: '2020er', colorImage: require('../../assets/filters/2020s.png'), bwImage: require('../../assets/filters/bw/2020s.png') },
 ];
 
-const ROUND_OPTIONS = [1, 3, 5, 7, 10];
+const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-const pickRandom = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-
-const shuffleArray = <T,>(array: T[]) => {
+const shuffleArray = (array) => {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
 };
 
-const mapDecadeToYear = (label: string) => {
-  const mapping: Record<string, string> = {
-    '80s': '1985',
-    '90s': '1995',
-    '2000s': '2005',
-    '2010s': '2015',
-    '2020s': '2023',
+const mapDecadeToYear = (label) => {
+  const mapping = {
+    '80s': '1980-1989',
+    '90s': '1990-1999',
+    '2000s': '2000-2009',
+    '2010s': '2010-2019',
+    '2020s': '2020-2025',
   };
-  return mapping[label] ?? '2020';
+  return mapping[label] ?? '2020-2025';
 };
 
 export default function ClassicSettingsScreen() {
   const { accessToken } = useSpotify();
-  const gameScreenOffset = useSharedValue(0);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
 
   const [genresExpanded, setGenresExpanded] = useState(false);
   const [decadesExpanded, setDecadesExpanded] = useState(false);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [selectedDecades, setSelectedDecades] = useState<string[]>([]);
-  const [trackInfo, setTrackInfo] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [selectedRounds, setSelectedRounds] = useState<number>(5);
+  const [selectedGenres, setSelectedGenres] = useState([]);
+  const [selectedDecades, setSelectedDecades] = useState([]);
+  const [selectedRounds, setSelectedRounds] = useState(5);
 
-  const toggleSelection = (id: string, selected: string[], setSelected: (val: string[]) => void) => {
+  const toggleSelection = (id, selected, setSelected) => {
     setSelected(selected.includes(id) ? selected.filter((v) => v !== id) : [...selected, id]);
   };
 
@@ -102,7 +101,7 @@ export default function ClassicSettingsScreen() {
         if (tracks.length === 0) continue;
 
         const selected = pickRandom(tracks);
-        foundTrack = { ...(selected as object), genre: combo.genre };
+        foundTrack = { ...selected, genre: combo.genre };
         break;
       } catch { }
     }
@@ -112,127 +111,105 @@ export default function ClassicSettingsScreen() {
       return;
     }
 
-    await playSong(foundTrack.uri, accessToken);
-    setIsPlaying(true);
-    setTrackInfo({
-      uri: foundTrack.uri,
-      title: foundTrack.name,
-      artist: foundTrack.artists.map((a: any) => a.name).join(', '),
-      year: foundTrack.album.release_date?.substring(0, 4) || 'Unbekannt',
-      genre: foundTrack.genre,
-      image: foundTrack.album.images?.[0]?.url,
-    });
-    gameScreenOffset.value = 0;
-  };
-
-  const playSong = async (uri: string, token: string) => {
     await fetch('https://api.spotify.com/v1/me/player/play', {
       method: 'PUT',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ uris: [uri] }),
+      body: JSON.stringify({ uris: [foundTrack.uri] }),
     });
-  };
 
-  const pausePlayback = async () => {
-    await fetch('https://api.spotify.com/v1/me/player/pause', {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${accessToken}` },
+    navigation.navigate('GameOverlay', {
+      track: {
+        uri: foundTrack.uri,
+        title: foundTrack.name,
+        artist: foundTrack.artists.map((a) => a.name).join(', '),
+        year: foundTrack.album.release_date?.substring(0, 4) || 'Unbekannt',
+        genre: foundTrack.genre,
+        image: foundTrack.album.images?.[0]?.url,
+      }
     });
-    setIsPlaying(false);
-  };
-
-  const resumePlayback = async () => {
-    await fetch('https://api.spotify.com/v1/me/player/play', {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    setIsPlaying(true);
   };
 
   return (
     <View style={{ flex: 1 }}>
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Classic Mode</Text>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.header}>Classic Mode</Text>
 
-      {/* Genre Filter */}
-      <View style={styles.shadowWrapper}>
-        <View style={styles.dropdownContainer}>
-          <TouchableOpacity onPress={() => setGenresExpanded(!genresExpanded)} style={styles.dropdownHeader}>
-            <Text style={styles.dropdownText}>Genre</Text>
-            <Text style={styles.dropdownArrow}>{genresExpanded ? '▲' : '▼'}</Text>
-          </TouchableOpacity>
-          {genresExpanded && (
-            <View style={styles.dropdownBody}>
-              <FilterGrid options={GENRE_OPTIONS} selected={selectedGenres} onToggle={(id) => toggleSelection(id, selectedGenres, setSelectedGenres)} />
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* Decade Filter */}
-      <View style={styles.shadowWrapper}>
-        <View style={styles.dropdownContainer}>
-          <TouchableOpacity onPress={() => setDecadesExpanded(!decadesExpanded)} style={styles.dropdownHeader}>
-            <Text style={styles.dropdownText}>Jahrzehnt</Text>
-            <Text style={styles.dropdownArrow}>{decadesExpanded ? '▲' : '▼'}</Text>
-          </TouchableOpacity>
-          {decadesExpanded && (
-            <View style={styles.dropdownBody}>
-              <FilterGrid options={DECADE_OPTIONS} selected={selectedDecades} onToggle={(id) => toggleSelection(id, selectedDecades, setSelectedDecades)} />
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* Round Selector */}
-      <View style={styles.shadowWrapper}>
-        <View style={styles.dropdownContainer}>
-          <Text style={styles.dropdownText}>Rundenanzahl</Text>
-          <View style={styles.roundButtonContainer}>
-            {ROUND_OPTIONS.map((count) => (
-              <TouchableOpacity
-                key={count}
-                onPress={() => setSelectedRounds(count)}
-                style={[styles.roundButton, selectedRounds === count && styles.roundButtonSelected]}
-              >
-                <Text style={[styles.roundButtonText, selectedRounds === count && styles.roundButtonTextSelected]}>{count}</Text>
-              </TouchableOpacity>
-            ))}
+        {/* Genre Filter */}
+        <View style={styles.shadowWrapper}>
+          <View style={styles.dropdownContainer}>
+            <TouchableOpacity onPress={() => setGenresExpanded(!genresExpanded)} style={styles.dropdownHeader}>
+              <Text style={styles.dropdownText}>Genre</Text>
+              <Text style={styles.dropdownArrow}>{genresExpanded ? '▲' : '▼'}</Text>
+            </TouchableOpacity>
+            {genresExpanded && (
+              <View style={styles.dropdownBody}>
+                <View style={styles.dividerLine} />
+                <FilterGrid
+                  options={GENRE_OPTIONS}
+                  selected={selectedGenres}
+                  onToggle={(id) => toggleSelection(id, selectedGenres, setSelectedGenres)}
+                />
+              </View>
+            )}
           </View>
         </View>
+
+        {/* Decade Filter */}
+        <View style={styles.shadowWrapper}>
+          <View style={styles.dropdownContainer}>
+            <TouchableOpacity onPress={() => setDecadesExpanded(!decadesExpanded)} style={styles.dropdownHeader}>
+              <Text style={styles.dropdownText}>Jahrzehnt</Text>
+              <Text style={styles.dropdownArrow}>{decadesExpanded ? '▲' : '▼'}</Text>
+            </TouchableOpacity>
+            {decadesExpanded && (
+              <View style={styles.dropdownBody}>
+                <View style={styles.dividerLine} />
+                <FilterGrid
+                  options={DECADE_OPTIONS}
+                  selected={selectedDecades}
+                  onToggle={(id) => toggleSelection(id, selectedDecades, setSelectedDecades)}
+                />
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Round Selector */}
+        <View style={styles.shadowWrapper}>
+          <View style={[styles.dropdownContainer, { paddingHorizontal: 16, paddingVertical: 12 }]}>
+            <Text style={styles.dropdownText}>Rundenanzahl: {selectedRounds}</Text>
+            <Slider
+              style={{ width: '100%', height: 40, marginTop: 8 }}
+              minimumValue={1}
+              maximumValue={10}
+              step={1}
+              value={selectedRounds}
+              minimumTrackTintColor="#0B3D91"
+              maximumTrackTintColor="#ccc"
+              thumbTintColor="#0B3D91"
+              onValueChange={(value) => setSelectedRounds(value)}
+            />
+          </View>
+        </View>
+
+        <View style={{ height: 80 + insets.bottom }} />
+      </ScrollView>
+
+      <View style={{
+        position: 'absolute',
+        bottom: insets.bottom + 16,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        zIndex: 10
+      }}>
+        <TouchableOpacity style={styles.playButton} onPress={handlePlaySong}>
+          <Text style={styles.playButtonText}>🎧 Spiel starten</Text>
+        </TouchableOpacity>
       </View>
-
-      <TouchableOpacity style={styles.playButton} onPress={handlePlaySong}>
-        <Text style={styles.playButtonText}>🎧 Spiel starten</Text>
-      </TouchableOpacity>
-
-      {trackInfo && (
-        <>
-          <InformationPopup
-            track={trackInfo}
-            onSkip={() => {
-              gameScreenOffset.value = 0;
-              handlePlaySong();
-            }}
-          />
-          <YellowGamePopup
-            offsetY={gameScreenOffset}
-            isPlaying={isPlaying}
-            onTogglePlayPause={() => {
-              isPlaying ? pausePlayback() : resumePlayback();
-              setIsPlaying(!isPlaying);
-            }}
-            onHidden={() => {
-              pausePlayback();
-              setIsPlaying(false);
-            }}
-          />
-        </>
-      )}
-    </ScrollView>
     </View>
   );
 }
