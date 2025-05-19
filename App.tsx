@@ -1,4 +1,5 @@
 import React from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -53,8 +54,13 @@ function RootApp() {
   return (
     <NavigationContainer>
       <Stack.Navigator id={undefined}>
+
         <Stack.Screen name="Tabs" component={MainTabs} options={{ headerShown: false }} />
-        <Stack.Screen name="ClassicSettings" component={ClassicSettingsScreen} />
+        <Stack.Screen
+          name="ClassicSettings"
+          component={ClassicSettingsScreen}
+          options={{ headerShown: false }} // ✅ HEADER AUSSCHALTEN
+        />
         <Stack.Screen name="ChallengeSettings" component={ChallengeSettingsScreen} />
         <Stack.Screen name="PartySettings" component={PartySettingsScreen} />
       </Stack.Navigator>
@@ -64,8 +70,10 @@ function RootApp() {
 
 export default function App() {
   return (
-    <SpotifyProvider>
-      <RootApp />
-    </SpotifyProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SpotifyProvider>
+        <RootApp />
+      </SpotifyProvider>
+    </GestureHandlerRootView>
   );
 }

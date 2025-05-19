@@ -79,6 +79,35 @@ shadowWrapper: {
     fontSize: 16,
     fontWeight: 'bold',
   },
+  roundButtonContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginTop: 10,
+  paddingHorizontal: 10,
+},
+
+roundButton: {
+  paddingVertical: 8,
+  paddingHorizontal: 16,
+  borderRadius: 20,
+  backgroundColor: '#ccc',
+  marginHorizontal: 5,
+},
+
+roundButtonSelected: {
+  backgroundColor: '#6c63ff',
+},
+
+roundButtonText: {
+  color: '#333',
+  fontWeight: 'bold',
+},
+
+roundButtonTextSelected: {
+  color: '#fff',
+},
 });
+
+
 
 export default styles;
