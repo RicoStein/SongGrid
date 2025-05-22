@@ -1,7 +1,14 @@
 import React from 'react';
+import { Easing } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import {
+  createBottomTabNavigator,
+} from '@react-navigation/bottom-tabs';
+import {
+  createStackNavigator,
+  CardStyleInterpolators,
+} from '@react-navigation/stack';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -9,19 +16,47 @@ import HomeScreen from './src/screens/HomeScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import LoginScreen from './src/screens/LoginScreen';
-
+import SignUpScreen from './src/screens/SignUpScreen';
 import ClassicSettingsScreen from './src/screens/ClassicSettingsScreen';
 import ChallengeSettingsScreen from './src/screens/ChallengeSettingsScreen';
 import PartySettingsScreen from './src/screens/PartySettingsScreen';
+import GameOverlayScreen from './src/screens/GameOverlayScreen';
+import TransitionScreen from './src/screens/TransitionScreen';
 
 import { SpotifyProvider, useSpotify } from './src/context/SpotifyContext';
 import { RootStackParamList, RootTabParamList } from './src/navigation/types';
 
-import GameOverlayScreen from './src/screens/GameOverlayScreen';
+import { TransitionSpecs } from '@react-navigation/stack';
+import type { StackNavigationOptions } from '@react-navigation/stack';
 
+const FadeTransition: StackNavigationOptions = {
+  gestureDirection: 'horizontal', // ✅ korrekt typisiert
+  transitionSpec: {
+    open: {
+      animation: 'timing',
+      config: {
+        duration: 600,
+        easing: Easing.out(Easing.ease),
+      },
+    },
+    close: {
+      animation: 'timing',
+      config: {
+        duration: 600,
+        easing: Easing.in(Easing.ease),
+      },
+    },
+  },
+  cardStyleInterpolator: ({ current }) => ({
+    cardStyle: {
+      opacity: current.progress,
+    },
+  }),
+  headerShown: false,
+};
+
+// Tabs für Hauptmenü
 const Tab = createBottomTabNavigator<RootTabParamList>();
-const Stack = createNativeStackNavigator<RootStackParamList>();
-
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -36,7 +71,7 @@ function MainTabs() {
         },
         tabBarActiveTintColor: '#0B3D91',
         tabBarInactiveTintColor: 'gray',
-        headerShown: false, // ✅ Kein Header für Tabs
+        headerShown: false,
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
@@ -46,39 +81,64 @@ function MainTabs() {
   );
 }
 
-function RootApp() {
-  const { accessToken } = useSpotify();
+// Auth Stack mit Animation
+const AuthStack = createStackNavigator<RootStackParamList>();
+function AuthNavigator() {
+  return (
+    <AuthStack.Navigator
+      id={undefined}
+      screenOptions={{
+        headerShown: false,
+        cardStyle: { backgroundColor: '#0f0528' },
+        ...FadeTransition, // ✅ Unsere eigene Transition
+      }}
+    >
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="SignUp" component={SignUpScreen} />
+      <AuthStack.Screen name="Transition" component={TransitionScreen} />
+    </AuthStack.Navigator>
+  );
+}
 
-  if (!accessToken) {
-    return <LoginScreen />;
-  }
+// App-Stack mit In-App Screens
+const AppStack = createNativeStackNavigator<RootStackParamList>();
+function AppNavigator() {
+  return (
+    <AppStack.Navigator id={undefined} screenOptions={{ headerShown: false }}>
+      <AppStack.Screen name="Tabs" component={MainTabs} />
+      <AppStack.Screen
+        name="ClassicSettings"
+        component={ClassicSettingsScreen}
+        options={{ headerShown: true, title: 'Classic Mode' }}
+      />
+      <AppStack.Screen name="ChallengeSettings" component={ChallengeSettingsScreen} />
+      <AppStack.Screen name="PartySettings" component={PartySettingsScreen} />
+      <AppStack.Screen
+        name="GameOverlay"
+        component={GameOverlayScreen}
+        options={{ presentation: 'transparentModal', headerShown: false }}
+      />
+    </AppStack.Navigator>
+  );
+}
+
+// Root: Entscheidet zwischen Auth & App
+function RootAppNavigator() {
+  const { accessToken } = useSpotify();
 
   return (
     <NavigationContainer>
-      <Stack.Navigator id={undefined}>
-        <Stack.Screen
-          name="Tabs"
-          component={MainTabs}
-          options={{ headerShown: false }} // ✅ Tabs behalten keinen Header
-        />
-        <Stack.Screen
-          name="ClassicSettings"
-          component={ClassicSettingsScreen}
-          options={{ title: 'Classic Mode' }} // ✅ Header wieder aktiv!
-        />
-        <Stack.Screen name="ChallengeSettings" component={ChallengeSettingsScreen} />
-        <Stack.Screen name="PartySettings" component={PartySettingsScreen} />
-        <Stack.Screen name="GameOverlay" component={GameOverlayScreen} options={{ presentation: 'transparentModal', headerShown: false }} />
-      </Stack.Navigator>
+      {accessToken ? <AppNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
 }
 
+// Haupt-App
 export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#0f0528' }}>
       <SpotifyProvider>
-        <RootApp />
+        <RootAppNavigator />
       </SpotifyProvider>
     </GestureHandlerRootView>
   );

@@ -19,5 +19,8 @@ export type RootStackParamList = {
       image: string;
     };
   };
+  Login: undefined;
+  SignUp: undefined;
+  Transition: { target: 'Login' | 'SignUp' };
 };
 

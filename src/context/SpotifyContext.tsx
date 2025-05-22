@@ -2,12 +2,12 @@ import React, { createContext, useContext, useState } from 'react';
 
 type SpotifyContextType = {
   accessToken: string | null;
-  setAccessToken: (token: string) => void;
+  setAccessToken: (token: string | null) => void;
 };
 
-const SpotifyContext = createContext<SpotifyContextType | undefined>(undefined);
+const SpotifyContext = createContext<SpotifyContextType | null>(null);
 
-export const SpotifyProvider = ({ children }: { children: React.ReactNode }) => {
+export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   return (
@@ -19,6 +19,8 @@ export const SpotifyProvider = ({ children }: { children: React.ReactNode }) => 
 
 export const useSpotify = () => {
   const context = useContext(SpotifyContext);
-  if (!context) throw new Error('useSpotify must be used within a SpotifyProvider');
+  if (!context) {
+    throw new Error('❌ useSpotify must be used within a SpotifyProvider');
+  }
   return context;
 };
